@@ -5,6 +5,8 @@
 # update
 # draw
 
+# yay i can use github from VS CODE!!!
+
 import pygame as pg #imports pygame and changes the variable name to just pg
 from settings import * 
 from sprites import *
