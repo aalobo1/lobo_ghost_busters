@@ -92,7 +92,7 @@ class Game:
            #makes sure u can get input from clicking
            print("I can get input from mousey mouse mouse mousekerson")
    def update(self):
-      self.animate()
+      # self.animate()
       self.all_sprites.update()
       #Time in seconds
       seconds = pg.time.get_ticks()//1000

@@ -10,8 +10,9 @@ from random import randint
 from utils import Cooldown
 vec = pg.math.Vector2
 from random import choice
-from utils import Spritesheet
+# from utils import Spritesheet
 from os import path
+from math import *
 
 # The sprites module contains all the sprites
 # Sprites incldue: player, mob - moving object
@@ -22,8 +23,8 @@ class Player(Sprite):
         self.groups = game.all_sprites
         Sprite.__init__(self, self.groups)
         self.game = game
-        self.spritesheet = Spritesheet(path.join(self.game.img_folder, "New Piskel (3).png"))
-        self.load_images()
+        # self.spritesheet = Spritesheet(path.join(self.game.img_folder, "New Piskel (3).png"))
+        # self.load_images()
         self.image = pg.Surface((32, 32))
 
         # self.image.fill((GREEN))
@@ -43,14 +44,21 @@ class Player(Sprite):
         self.jumping = False
         self.last_update = 0
         self.current_frame = 0
-    def load_images(self):
-        self.standing_frames = [self.spritesheet.get_image(0, 0, 32, 32),
-                                self.spritesheet.get_image(32, 32, 32, 32)]
-        for frame in self.standing_frames:
-            frame.set_colorkey(BLACK)
-        #self.walk_frames_r
-        #self.walk_frames_l
-        #pg.transform.flip
+        self.jump_power = 100
+    def jump(self):
+        self.rect.y += 1
+        hits = pg.spritecollide(self, self.game.all_walls, False)
+        self.rect.y += -1
+        if hits:
+            self.vel.y = -self.jump_power
+    # def load_images(self):
+    #     self.standing_frames = [self.spritesheet.get_image(0, 0, 32, 32),
+    #                             self.spritesheet.get_image(32, 32, 32, 32)]
+    #     for frame in self.standing_frames:
+    #         frame.set_colorkey(BLACK)
+    #     #self.walk_frames_r
+    #     #self.walk_frames_l
+    #     #pg.transform.flip
 
     def animate(self):
         now = pg.time.get_ticks()
@@ -67,9 +75,11 @@ class Player(Sprite):
     def update(self):
         pass
     def get_keys(self):
-        self.vel = vec(0,0)
+        self.vel = vec(0,GRAVITY)
         keys = pg.key.get_pressed()
         if keys[pg.K_SPACE]:
+            self.jump()
+        if keys[pg.K_e]:
             if self.bcd.ready():
                 self.bcd.start()
                 Bullet(self.game, self.rect.x, self.rect.y, self.lastdir)
@@ -160,6 +170,37 @@ class Player(Sprite):
         # #     print("ready")
 
 #Creates Mob using same code as player but not controllable with keys
+class SquareGrid:
+    def __init__(self, widt, height):
+        self.width = width
+        self.height = height
+        self.walls = []
+        # mob is able to move in all directions
+        self.connections = [vec(1,0), vec(-1,0), vec(0,1), vec(0,-1)]
+
+
+    def in_bounds(self, node):
+        # finds which nodes are inside the grid
+        return 0 <= node.x < self.width and 0 <= node.y < self.height
+    
+    def passable(self, node):
+        return node not in self.walls
+
+
+
+    def find_neighbors(self, node):
+        #finds the neghboring areas which the Mob can travel to
+        neighbors = [node + connection for connection in self.connections]
+        neighbors = filter(self.in_bounds, neighbors) # makes sure that the nodes are all in bounds
+        neighbors = filter(self.passable, neighbors)
+        return neighbors
+    
+
+
+
+
+        
+
 class Mob(Sprite):
     def __init__(self, game, x, y):
         Sprite.__init__(self)
@@ -174,6 +215,14 @@ class Mob(Sprite):
         self.rect.x = x * TILESIZE[0]
         self.rect.y = y * TILESIZE[1]
         self.speed = 10
+    def chase_player(self, dir, player):
+        player.rect.x, player.rect.y = player
+        self.rect.x, self.rect.y = self
+        dir = player - self
+
+        
+
+        
     def collide_with_walls(self, dir):
             if dir == 'x':
                 hits = pg.sprite.spritecollide(self, self.game.all_walls, False)
