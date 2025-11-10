@@ -13,6 +13,6 @@ GREY = (150,150,150)
 FPS = 30
 # using a tuple to define a tile size
 
-GRAVITY = 10
+
 
 SCORE = 0

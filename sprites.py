@@ -75,7 +75,7 @@ class Player(Sprite):
     def update(self):
         pass
     def get_keys(self):
-        self.vel = vec(0,GRAVITY)
+        
         keys = pg.key.get_pressed()
         if keys[pg.K_SPACE]:
             self.jump()
@@ -194,6 +194,37 @@ class SquareGrid:
         neighbors = filter(self.in_bounds, neighbors) # makes sure that the nodes are all in bounds
         neighbors = filter(self.passable, neighbors)
         return neighbors
+    def bfs_pathfinding(grid, start, goal):
+        if start == goal:
+            return[]
+        
+        frontier = deque()
+        frontier.append(start)
+        came_from = {start: None}
+        
+        while frontier:
+            current = frontier.popleft()
+
+            if current == goal:
+                break
+
+            for next_node in grid.find.neighbors(current):
+                if next_node not in came_from:
+                    frontier.append(next_node)
+                    came_from[next_node] = current
+
+        if goal not in came_from:
+            return[]
+        
+        path = []
+        current = goal
+        while current != start:
+            path.append(current)
+            current = came_from[current]
+        path.reverse()
+
+        return path
+        
     
 
 
