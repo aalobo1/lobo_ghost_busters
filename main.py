@@ -42,7 +42,7 @@ class Game:
       surface.blit(text_surface, text_rect)
 
    def new(self):
-      # the sprite Group allows us to upate and draw sprite in grouped batches
+      # the sprite  oup allows us to upate and draw sprite in grouped batches
       self.load_data()
       # create all sprite groups
       self.all_sprites = pg.sprite.Group()

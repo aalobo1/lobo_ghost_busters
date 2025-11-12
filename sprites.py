@@ -171,7 +171,7 @@ class Player(Sprite):
 
 #Creates Mob using same code as player but not controllable with keys
 class SquareGrid:
-    def __init__(self, widt, height):
+    def __init__(self, width, height):
         self.width = width
         self.height = height
         self.walls = []
@@ -246,10 +246,59 @@ class Mob(Sprite):
         self.rect.x = x * TILESIZE[0]
         self.rect.y = y * TILESIZE[1]
         self.speed = 10
-    def chase_player(self, dir, player):
-        player.rect.x, player.rect.y = player
-        self.rect.x, self.rect.y = self
-        dir = player - self
+        self.path = []
+        self.path_update_cooldown = Cooldown(500) # update path every 500 ms
+        self.path_update_cooldown.start()
+
+        #create grid for pathing
+        self.grid = SquareGrid(TILES_W, TILES_H)
+        self.update_grid()
+
+    def update_grid(self):
+        # update grid with positions of walls
+        self.grid.walls = []
+        for wall in self.game.all_walls:
+            wall_tile = vec(wall.rect.x // TILESIZE[0], wall.rect.y // TILESIZE[1])
+            self.grid.walls.append(wall_tile)
+    
+    def get_tile_pos(self):
+        # gets current tile of Mob
+        return vec(int(self.rect.x // TILESIZE[0]), int(self.rect.y // TILESIZE[1]))
+    
+
+
+
+    def chase_player(self):
+        # use pathfinding to chase player
+        if self.path_update_cooldown.ready():
+            self.path_update_cooldown.start()
+            
+            # Get current positions in tile coordinates
+            mob_tile = self.get_tile_pos()
+            player_tile = vec(int(self.game.player.rect.x // TILESIZE[0]), 
+                            int(self.game.player.rect.y // TILESIZE[1]))
+            
+            # Calculate new path
+            self.path = bfs_pathfinding(self.grid, mob_tile, player_tile)
+        
+        # Follow the path
+        if self.path:
+            target_tile = self.path[0]
+            target_pos = vec(target_tile.x * TILESIZE[0], target_tile.y * TILESIZE[1])
+            
+            # Calculate direction to target
+            direction = target_pos - self.pos
+            if direction.length() > 0:
+                direction = direction.normalize()
+                self.vel = direction * self.speed * self.game.dt
+                
+                # Remove waypoint if reached
+                if self.pos.distance_to(target_pos) < 5:
+                    self.path.pop(0)
+            else:
+                self.vel = vec(0, 0)
+        else:
+            self.vel = vec(0, 0)
 
         
 
