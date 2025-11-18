@@ -2,7 +2,6 @@
 
 # sprites module, to keep everything separated and organized
 
-
 import pygame as pg
 from pygame.sprite import Sprite
 from settings import *
@@ -10,7 +9,6 @@ from random import randint
 from utils import Cooldown
 vec = pg.math.Vector2
 from random import choice
-# from utils import Spritesheet
 from os import path
 from math import *
 
@@ -23,15 +21,9 @@ class Player(Sprite):
         self.groups = game.all_sprites
         Sprite.__init__(self, self.groups)
         self.game = game
-        # self.spritesheet = Spritesheet(path.join(self.game.img_folder, "New Piskel (3).png"))
-        # self.load_images()
         self.image = pg.Surface((32, 32))
-
-        # self.image.fill((GREEN))
         self.image = game.player_img
         self.rect = self.image.get_rect()
-        # self.rect.x = x * TILESIZE[0]
-        # self.rect.y = y * TILESIZE[1]
         self.vel = vec(0,0)
         self.pos = vec(x,y) * TILESIZE[0]
         self.speed = 300
@@ -45,25 +37,17 @@ class Player(Sprite):
         self.last_update = 0
         self.current_frame = 0
         self.jump_power = 100
+    
     def jump(self):
         self.rect.y += 1
         hits = pg.spritecollide(self, self.game.all_walls, False)
         self.rect.y += -1
         if hits:
             self.vel.y = -self.jump_power
-    # def load_images(self):
-    #     self.standing_frames = [self.spritesheet.get_image(0, 0, 32, 32),
-    #                             self.spritesheet.get_image(32, 32, 32, 32)]
-    #     for frame in self.standing_frames:
-    #         frame.set_colorkey(BLACK)
-    #     #self.walk_frames_r
-    #     #self.walk_frames_l
-    #     #pg.transform.flip
 
     def animate(self):
         now = pg.time.get_ticks()
         if not self.jumping and not self.walking:
-            #switches the frame every 350 milliseconds
             if now - self.last_update > 350:
                 print(now)
                 self.last_update = now
@@ -72,10 +56,11 @@ class Player(Sprite):
                 self.image = self.standing_frames[self.current_frame]
                 self.rect = self.image.get_rect()
                 self.rect.bottom = bottom
+    
     def update(self):
         pass
+    
     def get_keys(self):
-        
         keys = pg.key.get_pressed()
         if keys[pg.K_SPACE]:
             self.jump()
@@ -86,20 +71,15 @@ class Player(Sprite):
         if keys[pg.K_w]:
             self.vel.y = -self.speed*self.game.dt
             self.lastdir = "up"
-            # self.rect.y -= self.speed
         if keys[pg.K_a]:
             self.vel.x = -self.speed*self.game.dt
             self.lastdir = "left"
-            # self.rect.x -= self.speed
         if keys[pg.K_s]:
             self.vel.y = self.speed*self.game.dt
             self.lastdir = "down"
-            # self.rect.y += self.speed
         if keys[pg.K_d]:
             self.vel.x = self.speed*self.game.dt
             self.lastdir = "right"
-            # self.rect.x += self.speed
-        # accounting for diagonal movement
         if self.vel.x != 0 and self.vel.y != 0:
             self.vel *= 0.7071
 
@@ -107,7 +87,6 @@ class Player(Sprite):
         if dir == 'x':
             hits = pg.sprite.spritecollide(self, self.game.all_walls, False)
             if hits:
-                #creates condition to check if an object is collidable, and if yes then moving it
                 if self.vel.x > 0:
                     if hits[0].state == "moveable":
                         print("i hit a moveable block")
@@ -116,7 +95,6 @@ class Player(Sprite):
                             print("second element")
                     else:
                         self.pos.x = hits[0].rect.left - self.rect.width
-                        
                 if self.vel.x < 0:
                     if hits[0].state == "moveable":
                         print("i hit a moveable block")
@@ -125,7 +103,6 @@ class Player(Sprite):
                         self.pos.x = hits[0].rect.left - self.rect.width
                     self.pos.x = hits[0].rect.right
                 self.vel.x = 0
-                #hits[0].vel.x = 0
                 self.rect.x = self.pos.x
         if dir == 'y':
             hits = pg.sprite.spritecollide(self, self.game.all_walls, False)
@@ -137,9 +114,7 @@ class Player(Sprite):
                 self.vel.y = 0
                 self.rect.y = self.pos.y
 
-
     def collide_with_stuff(self, group, kill):
-        #constantly checking whether a spirte has collided with a certain group
         hits = pg.sprite.spritecollide(self, group, kill)
         if hits: 
             if str(hits[0].__class__.__name__) == "Mob":
@@ -147,11 +122,11 @@ class Player(Sprite):
                 if self.cd.ready():
                     self.health -= 10
                     self.cd.start()
-
                 if self.health == 0:
                     pg.quit()
             if str(hits[0].__class__.__name__) == "Coin":
                 self.score += 1    
+    
     def update(self):
         self.get_keys()
         self.pos += self.vel
@@ -159,78 +134,8 @@ class Player(Sprite):
         self.collide_with_walls('x')
         self.rect.y = self.pos.y
         self.collide_with_walls('y')
-
         self.collide_with_stuff(self.game.all_mobs, False)
         self.collide_with_stuff(self.game.all_coins, True)
-        # if not self.cd.ready():
-        #     self.image = self.game.player_img
-        # #     print("not ready")
-        # else:
-        #     self.image.fill(GREEN)
-        # #     print("ready")
-
-#Creates Mob using same code as player but not controllable with keys
-class SquareGrid:
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.walls = []
-        # mob is able to move in all directions
-        self.connections = [vec(1,0), vec(-1,0), vec(0,1), vec(0,-1)]
-
-
-    def in_bounds(self, node):
-        # finds which nodes are inside the grid
-        return 0 <= node.x < self.width and 0 <= node.y < self.height
-    
-    def passable(self, node):
-        return node not in self.walls
-
-
-
-    def find_neighbors(self, node):
-        #finds the neghboring areas which the Mob can travel to
-        neighbors = [node + connection for connection in self.connections]
-        neighbors = filter(self.in_bounds, neighbors) # makes sure that the nodes are all in bounds
-        neighbors = filter(self.passable, neighbors)
-        return neighbors
-    def bfs_pathfinding(grid, start, goal):
-        if start == goal:
-            return[]
-        
-        frontier = deque()
-        frontier.append(start)
-        came_from = {start: None}
-        
-        while frontier:
-            current = frontier.popleft()
-
-            if current == goal:
-                break
-
-            for next_node in grid.find.neighbors(current):
-                if next_node not in came_from:
-                    frontier.append(next_node)
-                    came_from[next_node] = current
-
-        if goal not in came_from:
-            return[]
-        
-        path = []
-        current = goal
-        while current != start:
-            path.append(current)
-            current = came_from[current]
-        path.reverse()
-
-        return path
-        
-    
-
-
-
-
-        
 
 class Mob(Sprite):
     def __init__(self, game, x, y):
@@ -245,64 +150,7 @@ class Mob(Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x * TILESIZE[0]
         self.rect.y = y * TILESIZE[1]
-        self.speed = 10
-        self.path = []
-        self.path_update_cooldown = Cooldown(500) # update path every 500 ms
-        self.path_update_cooldown.start()
-
-        #create grid for pathing
-        self.grid = SquareGrid(TILES_W, TILES_H)
-        self.update_grid()
-
-    def update_grid(self):
-        # update grid with positions of walls
-        self.grid.walls = []
-        for wall in self.game.all_walls:
-            wall_tile = vec(wall.rect.x // TILESIZE[0], wall.rect.y // TILESIZE[1])
-            self.grid.walls.append(wall_tile)
-    
-    def get_tile_pos(self):
-        # gets current tile of Mob
-        return vec(int(self.rect.x // TILESIZE[0]), int(self.rect.y // TILESIZE[1]))
-    
-
-
-
-    def chase_player(self):
-        # use pathfinding to chase player
-        if self.path_update_cooldown.ready():
-            self.path_update_cooldown.start()
-            
-            # Get current positions in tile coordinates
-            mob_tile = self.get_tile_pos()
-            player_tile = vec(int(self.game.player.rect.x // TILESIZE[0]), 
-                            int(self.game.player.rect.y // TILESIZE[1]))
-            
-            # Calculate new path
-            self.path = bfs_pathfinding(self.grid, mob_tile, player_tile)
-        
-        # Follow the path
-        if self.path:
-            target_tile = self.path[0]
-            target_pos = vec(target_tile.x * TILESIZE[0], target_tile.y * TILESIZE[1])
-            
-            # Calculate direction to target
-            direction = target_pos - self.pos
-            if direction.length() > 0:
-                direction = direction.normalize()
-                self.vel = direction * self.speed * self.game.dt
-                
-                # Remove waypoint if reached
-                if self.pos.distance_to(target_pos) < 5:
-                    self.path.pop(0)
-            else:
-                self.vel = vec(0, 0)
-        else:
-            self.vel = vec(0, 0)
-
-        
-
-        
+        self.speed = 5
     def collide_with_walls(self, dir):
             if dir == 'x':
                 hits = pg.sprite.spritecollide(self, self.game.all_walls, False)
@@ -311,9 +159,12 @@ class Mob(Sprite):
                         self.pos.x = hits[0].rect.left - self.rect.width
                     if self.vel.x < 0:
                         self.pos.x = hits[0].rect.right
-                    #self.vel.x = 0
                     self.rect.x = self.pos.x
-                    self.vel.x *= choice([-1, 1])
+                    self.vel.x = 0
+                    # makes the mobs bounce randomly off wall using vectors
+                    # self.rect.x = self.pos.x
+                    # self.vel.x *= choice([-1, 1])
+                   
             if dir == 'y':
                 hits = pg.sprite.spritecollide(self, self.game.all_walls, False)
                 if hits:
@@ -321,25 +172,116 @@ class Mob(Sprite):
                         self.pos.y = hits[0].rect.top - self.rect.height
                     if self.vel.y < 0:
                         self.pos.y = hits[0].rect.bottom
-                    #self.vel.y = 0
                     self.rect.y = self.pos.y
-                    self.vel.y *= choice([-1, 1])
-        
-
+                    self.vel.y = 0
+                    # makes the mobs bounce randomly off wall using vectors
+                    # self.rect.y = self.pos.y
+                    # self.vel.y *= choice([-1, 1])
+    def chase_player(self, dir):
+        #used chat gpt for help because my mobs were only moving when I moved
+            # Get player reference from game
+        player = self.game.player
+ 
+        # Vector pointing from mob to player
+        dir = player.pos - self.pos
+ 
+        # Normalize to length 1 so movement is consistent
+        if dir.length() > 0:
+            dir = dir.normalize()
+ 
+        # Move in that direction
+        self.vel = dir * self.speed
+ 
+        # Move on each axis separately so it collides with walls
+        self.pos.x += self.vel.x * self.game.dt
+        self.rect.x = self.pos.x
+        self.collide_with_walls('x')
+ 
+        self.pos.y += self.vel.y * self.game.dt
+        self.rect.y = self.pos.y
+        self.collide_with_walls('y')
+        # if dir == 'x':
+        #     if self.game.player.pos.x > self.pos.x:
+        #         self.vel.x = abs(0.7 * self.game.player.vel.x)
+        #     elif self.game.player.pos.x < self.pos.x:
+        #         self.vel.x = -abs(0.7 * self.game.player.vel.x)
+        # if dir == 'y':
+        #     if self.game.player.pos.y > self.pos.y:
+        #         self.vel.y = abs(0.7 * self.game.player.vel.y)
+        #     elif self.game.player.pos.y < self.pos.y:
+        #         self.vel.y = -abs(0.7 * self.game.player.vel.y)
+ 
+ 
+       
+ 
     def update(self):
         #mob behavior
         self.pos += self.vel
         self.rect.x = self.pos.x
         self.collide_with_walls('x')
+        self.chase_player('x')
         self.rect.y = self.pos.y
         self.collide_with_walls('y')
-        if self.game.player.vel.x > self.vel.x:
-            #print ("I ned to chase the player")
-            pass
-        else:
-           # print ('I dont need to chase the player x')
-           pass
-#Creates coins usingthe same mechanism as mobs but unmoving
+        self.chase_player('y')
+        # if self.game.player.vel.x > self.vel.x:
+        #     self.vel.x = self.game.player.vel.x
+        #  Pacman tunnel through sides
+        if self.rect.left > WIDTH:
+            self.pos.x = -self.rect.width
+            self.rect.x = self.pos.x
+ 
+        if self.rect.right < 0:
+            self.pos.x = WIDTH
+            self.rect.x = self.pos.x
+
+# A* Pathfinding Node class
+class Node:
+    def __init__(self, position):
+        self.position = position  # (x, y) tile coordinates
+        self.parent = None
+        self.gx = 0  # Cost from start to this node
+        self.hx = 0  # Heuristic cost from this node to goal
+        self.fx = 0  # Total cost (gx + hx)
+    
+    def __eq__(self, other):
+        return self.position == other.position
+
+
+# A* Pathfinding Algorithm
+def astar_pathfinding(start_pos, end_pos, walls):
+    """
+    A* pathfinding algorithm
+    start_pos: (x, y) tile position
+    end_pos: (x, y) tile position  
+    walls: list of (x, y) tile positions that are walls
+    """
+    # If already at goal, return empty path
+    if start_pos == end_pos:
+        return []
+    
+    # Define possible movements (4 dirs only so it doesnt clip thru walls and moves like pac man)
+    ADJACENTS = [
+        (-1, 0),  # Left
+        (1, 0),   # Right
+        (0, -1),  # Up
+        (0, 1)    # Down
+    ]
+    
+    # Create start and end nodes
+    start_node = Node(start_pos)
+    end_node = Node(end_pos)
+    
+    # Initialize open and closed lists
+    open_list = [start_node]
+    closed_list = []
+    
+   
+                
+                
+            
+           
+
+
 class Coin(Sprite):
     def __init__(self, game, x, y):
         self.game = game
@@ -351,26 +293,43 @@ class Coin(Sprite):
         self.rect.x = x* TILESIZE[0]
         self.rect.y = y* TILESIZE[1]
         
+
 class Wall(Sprite):
-    #creates walls that will be able to be collided with
     def __init__(self, game, x, y, state):
         self.groups = game.all_sprites, game.all_walls
         Sprite.__init__(self, self.groups)
         self.game = game
-        
         self.image = pg.Surface(TILESIZE)
         self.image.fill(GREY)
         self.rect = self.image.get_rect()
         self.vel = vec(0,0)
         self.pos = vec(x,y) * TILESIZE[0]
         self.state = state
+        self.image = game.wall_img
+    
     def update(self):
-        # wall
         self.pos += self.vel
         self.rect.x = self.pos.x
         self.rect.y = self.pos.y
 
-#creates the Bullet class    
+# class Wall(Sprite):
+#     def __init__(self, game, x, y, state):
+#         self.groups = game.all_sprites, game.all_walls
+#         Sprite.__init__(self, self.groups)
+#         self.game = game
+#         self.image = pg.Surface(TILESIZE)
+#         self.image.fill(GREY)
+#         self.rect = self.image.get_rect()
+#         self.vel = vec(0,0)
+#         self.pos = vec(x,y) * TILESIZE[0]
+#         self.state = state
+#         self.image = game.bgwall_img
+    
+#     def update(self):
+#         self.pos += self.vel
+#         self.rect.x = self.pos.x
+#         self.rect.y = self.pos.y
+
 class Bullet(Sprite):
     def __init__(self, game, x, y, direction):
         self.game = game
@@ -397,9 +356,9 @@ class Bullet(Sprite):
         self.pos += self.vel
         self.rect.x = self.pos.x
         self.rect.y = self.pos.y
+    
     def collide(self):
         hits = pg.sprite.spritecollide(self, self.game.all_walls, True)
         if hits:
             self.kill()
 
-    

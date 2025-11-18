@@ -32,6 +32,8 @@ class Game:
       self.map = Map(path.join(self.game_folder, 'level1.txt'))
       # loads image into memory when a new game is created and load_data is called
       self.player_img = pg.image.load(path.join(self.img_folder, "New Piskel (2).png")).convert_alpha()
+      self.wall_img = pg.image.load(path.join(self.img_folder, "walltexture.png")).convert_alpha()
+      # self.bgwall_img = pg.image.load(path.join(self.img_folder, "bgwall.png")).convert_alpha()
 
    def draw_text(self, surface, text, size, color, x, y):
       font_name = pg.font.match_font('arial')
@@ -58,8 +60,8 @@ class Game:
             print(col)
             if tile == '1':
                Wall(self, col, row, "")
-            if tile == '2':
-               Wall(self, col, row, "moveable")
+            # if tile == '2':
+            #    BGWall(self, col, row, "moveable")
             if tile == 'C':
                Coin(self, col, row)
             elif tile == 'P':
@@ -104,7 +106,7 @@ class Game:
 
 
    def draw(self):
-      self.screen.fill(WHITE)
+      self.screen.fill(BLACK)
       self.all_sprites.draw(self.screen)
       self.draw_text(self.screen, "Health:"+str(self.player.health), 20, BLACK, 30, 20) 
       self.draw_text(self.screen, "Score:"+str(self.player.score), 20, BLACK, 30, 40) 
