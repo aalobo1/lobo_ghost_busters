@@ -31,9 +31,11 @@ class Game:
       self.img_folder = path.join(self.game_folder, "images")
       self.map = Map(path.join(self.game_folder, 'level1.txt'))
       # loads image into memory when a new game is created and load_data is called
-      self.player_img = pg.image.load(path.join(self.img_folder, "New Piskel (2).png")).convert_alpha()
+      self.player_img = pg.image.load(path.join(self.img_folder, "New Piskel (1).png")).convert_alpha()
       self.wall_img = pg.image.load(path.join(self.img_folder, "walltexture.png")).convert_alpha()
-      # self.bgwall_img = pg.image.load(path.join(self.img_folder, "bgwall.png")).convert_alpha()
+      self.bgwall_img = pg.image.load(path.join(self.img_folder, "bgwall.png")).convert_alpha()
+      self.bgwall_img = pg.image.load(path.join(self.img_folder, "bgwall.png")).convert_alpha()
+      self.coin_img = pg.image.load(path.join(self.img_folder, "coin.png")).convert_alpha()
 
    def draw_text(self, surface, text, size, color, x, y):
       font_name = pg.font.match_font('arial')

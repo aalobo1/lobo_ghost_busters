@@ -274,6 +274,20 @@ def astar_pathfinding(start_pos, end_pos, walls):
     # Initialize open and closed lists
     open_list = [start_node]
     closed_list = []
+    # Loop until end is found
+    while len(open_list) > 0:
+        # Get node with lowest fx
+        current_node = open_list[0]
+        current_index = 0
+        for index, node in enumerate(open_list):
+            if node.fx < current_node.fx:
+                current_node = node
+                current_index = index
+        
+        # Move current node from open to closed list
+        open_list.pop(current_index)
+        closed_list.append(current_node)
+
     
    
                 
@@ -292,6 +306,7 @@ class Coin(Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x* TILESIZE[0]
         self.rect.y = y* TILESIZE[1]
+        self.image = game.coin_img
         
 
 class Wall(Sprite):
