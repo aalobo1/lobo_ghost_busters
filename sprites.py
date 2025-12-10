@@ -242,7 +242,12 @@ class Node:
         self.gx = 0  # Cost from start to this node
         self.hx = 0  # Heuristic cost from this node to goal
         self.fx = 0  # Total cost (gx + hx)
-    
+    # gx + hx = fx
+    """
+    gx = 30 (traveled 3 tiles, 10 cost each)
+    hx = 50 (5 tiles away: |5-2| + |5-3| = 5, times 10 = 50)
+    fx = 80 (total estimated cost)
+    """
     def __eq__(self, other):
         return self.position == other.position
 
@@ -287,6 +292,44 @@ def astar_pathfinding(start_pos, end_pos, walls):
         # Move current node from open to closed list
         open_list.pop(current_index)
         closed_list.append(current_node)
+        
+        # goal found!!!!!
+        if current_node == end_node:
+            path = []
+            current = current_node
+            while current is not None:
+                path.append(current.position)
+                current = current.parent
+            path.reverse()
+            # Remove the starting position
+            if len(path) > 0 and path[0] == start_pos:
+                path.pop(0)
+            return path
+        
+        # Generate children (neighbors)
+        children = []
+        for new_position in ADJACENTS:
+            # Get node position
+            node_position = (current_node.position[0] + new_position[0],
+                           current_node.position[1] + new_position[1])
+            
+            # Check if within bounds
+            if node_position[0] < 0 or node_position[0] >= TILES_W:
+                continue
+            if node_position[1] < 0 or node_position[1] >= TILES_H:
+                continue
+            
+            # Check if walkable (not a wall)
+            if node_position in walls:
+                continue
+            
+            # Create new node
+            new_node = Node(node_position)
+            new_node.parent = current_node
+            children.append(new_node)
+
+
+
 
     
    
