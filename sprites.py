@@ -177,41 +177,29 @@ class Mob(Sprite):
                     # makes the mobs bounce randomly off wall using vectors
                     # self.rect.y = self.pos.y
                     # self.vel.y *= choice([-1, 1])
-    def chase_player(self, dir):
-        #used chat gpt for help because my mobs were only moving when I moved
-            # Get player reference from game
-        player = self.game.player
- 
-        # Vector pointing from mob to player
-        dir = player.pos - self.pos
- 
-        # Normalize to length 1 so movement is consistent
-        if dir.length() > 0:
-            dir = dir.normalize()
- 
-        # Move in that direction
-        self.vel = dir * self.speed
- 
-        # Move on each axis separately so it collides with walls
-        self.pos.x += self.vel.x * self.game.dt
-        self.rect.x = self.pos.x
-        self.collide_with_walls('x')
- 
-        self.pos.y += self.vel.y * self.game.dt
-        self.rect.y = self.pos.y
-        self.collide_with_walls('y')
-        # if dir == 'x':
-        #     if self.game.player.pos.x > self.pos.x:
-        #         self.vel.x = abs(0.7 * self.game.player.vel.x)
-        #     elif self.game.player.pos.x < self.pos.x:
-        #         self.vel.x = -abs(0.7 * self.game.player.vel.x)
-        # if dir == 'y':
-        #     if self.game.player.pos.y > self.pos.y:
-        #         self.vel.y = abs(0.7 * self.game.player.vel.y)
-        #     elif self.game.player.pos.y < self.pos.y:
-        #         self.vel.y = -abs(0.7 * self.game.player.vel.y)
- 
- 
+    def chase_player(self):
+        # use A* to actually chase player with grid based movement and only when not moving
+        if not self.moving:
+            if self.path_update_cooldown.ready() or len(self.path) == 0:
+                self.path_update_cooldown.start()
+
+                # Get current positions in tile coordinates
+                mob_tile = self.get_tile_pos()
+                player_tile = (int(self.game.player.rect.x // TILESIZE[0]), 
+                              int(self.game.player.rect.y // TILESIZE[1]))
+
+
+
+
+        
+    def get_wall_positions(self):
+        # get list of all wall tile positions
+        walls = []
+        for wall in self.game.all_walls:
+            wall_tile = (int(wall.rect.x // TILESIZE[0]), int(wall.rect.y // TILESIZE[1]))
+            walls.append(wall_tile)
+        return walls
+        
        
  
     def update(self):
@@ -327,6 +315,38 @@ def astar_pathfinding(start_pos, end_pos, walls):
             new_node = Node(node_position)
             new_node.parent = current_node
             children.append(new_node)
+            # Loop through children
+        for child in children:
+            # Child is already in closed list
+            if child in closed_list:
+                continue
+            
+            # Calculate costs
+            # All movements cost 10 (no diagonals)
+            child.gx = current_node.gx + 10
+            
+            # Heuristic: Manhattan distance * 10
+            child.hx = (abs(child.position[0] - end_node.position[0]) + 
+                       abs(child.position[1] - end_node.position[1])) * 10
+            
+            child.fx = child.gx + child.hx
+            
+            # Check if child is already in open list with better path
+            skip_child = False
+            for open_node in open_list:
+                if child == open_node and child.gx > open_node.gx:
+                    skip_child = True
+                    break
+            
+            if skip_child:
+                continue
+            
+            # Add child to open list
+            open_list.append(child)
+    
+    # No path found
+    return []
+
 
 
 
