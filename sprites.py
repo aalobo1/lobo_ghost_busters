@@ -187,6 +187,30 @@ class Mob(Sprite):
                 mob_tile = self.get_tile_pos()
                 player_tile = (int(self.game.player.rect.x // TILESIZE[0]), 
                               int(self.game.player.rect.y // TILESIZE[1]))
+                              
+                # Don't pathfind if already at player position
+                if mob_tile == player_tile:
+                    self.path = []
+                    return
+                
+                # Get all wall positions
+                walls = self.get_wall_positions()
+                
+                # Calculate new path using A*
+                new_path = astar_pathfinding(mob_tile, player_tile, walls)
+                
+                # Only update path if we found one and it's valid
+                if new_path and len(new_path) > 0:
+                    # Remove current position if it's the first element
+                    if new_path[0] == mob_tile:
+                        new_path.pop(0)
+                    self.path = new_path
+            
+            # Start moving to next tile in path
+            if self.path and len(self.path) > 0:
+                next_tile = self.path[0]
+                self.target_pos = vec(next_tile[0] * TILESIZE[0], next_tile[1] * TILESIZE[1])
+
 
 
 
