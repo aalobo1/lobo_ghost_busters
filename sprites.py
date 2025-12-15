@@ -209,7 +209,56 @@ class Mob(Sprite):
             # Start moving to next tile in path
             if self.path and len(self.path) > 0:
                 next_tile = self.path[0]
-                self.target_pos = vec(next_tile[0] * TILESIZE[0], next_tile[1] * TILESIZE[1])
+                self.target_pos = vec(next_tile[0] * TILESIZE[0], next_tile[1] * TILESIZE[1])   
+
+                 # Make sure we're not already at the target
+                if self.pos.distance_to(self.target_pos) > 1:
+                    self.moving = True
+                    
+                    # Calculate direction
+                    direction = self.target_pos - self.pos
+                    direction = direction.normalize()
+                    self.vel = direction * self.speed
+                else:
+                    # Already at target, remove it
+                    self.path.pop(0)
+        
+        # Continue moving toward target tile
+        elif self.moving and self.target_pos:
+            # Check if we've reached the target tile
+            distance = self.pos.distance_to(self.target_pos)
+            
+            # Use a larger threshold to prevent overshooting
+            if distance <= max(self.speed * self.game.dt + 1, 3):
+                # Snap to grid position
+                self.pos = self.target_pos.copy()
+                self.grid_x = int(self.pos.x // TILESIZE[0])
+                self.grid_y = int(self.pos.y // TILESIZE[1])
+                self.vel = vec(0, 0)
+                self.moving = False
+                
+                # Remove completed waypoint
+                if self.path and len(self.path) > 0:
+                    self.path.pop(0)
+            else:
+                # Keep moving in the same direction at constant speed
+                direction = (self.target_pos - self.pos).normalize()
+                self.vel = direction * self.speed
+    
+    def collide_with_walls(self, dir):
+        # Grid-locked movement doesn't need wall collision
+        # because pathfinding avoids walls
+        pass
+
+    def update(self):
+        # Chase the player using A* pathfinding
+        self.chase_player()
+        
+        # Update position (grid-locked movement)
+        self.pos += self.vel * self.game.dt
+        self.rect.x = self.pos.x
+        self.rect.y = self.pos.y
+
 
 
 
