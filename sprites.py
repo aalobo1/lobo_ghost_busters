@@ -18,32 +18,46 @@ from math import *
 #Creates player by creating a class
 class Player(Sprite):
     def __init__(self, game, x, y,):
+        print(f"Creating Player at {x}, {y}")
         self.groups = game.all_sprites
         Sprite.__init__(self, self.groups)
         self.game = game
         self.image = pg.Surface((32, 32))
         self.image = game.player_img
         self.rect = self.image.get_rect()
+        
+        # grid movememnt
+        self.grid_x = x
+        self.grid_y = y
+        self.pos = vec(x * TILESIZE[0], y * TILESIZE[1])
+        self.rect.x = self.pos.x
+        self.rect.y = self.pos.y
+
         self.vel = vec(0,0)
-        self.pos = vec(x,y) * TILESIZE[0]
         self.speed = 300
         self.health = 100
         self.score = 0
         self.cd = Cooldown(1000)
         self.bcd = Cooldown(250)
-        self.lastdir = "up"
+
+        #grid movement variables
+        self.moving = False
+        self.target_pos = None
+        self.next_direction = None  # Store input for next move
+        self.current_direction = None
+
         self.walking = False
-        self.jumping = False
+        #self.jumping = False
         self.last_update = 0
         self.current_frame = 0
-        self.jump_power = 100
+    #     self.jump_power = 100
     
-    def jump(self):
-        self.rect.y += 1
-        hits = pg.spritecollide(self, self.game.all_walls, False)
-        self.rect.y += -1
-        if hits:
-            self.vel.y = -self.jump_power
+    # def jump(self):
+    #     self.rect.y += 1
+    #     hits = pg.spritecollide(self, self.game.all_walls, False)
+    #     self.rect.y += -1
+    #     if hits:
+    #         self.vel.y = -self.jump_power
 
     def animate(self):
         now = pg.time.get_ticks()
@@ -139,18 +153,33 @@ class Player(Sprite):
 
 class Mob(Sprite):
     def __init__(self, game, x, y):
-        Sprite.__init__(self)
+        print(f"Creating Mob at {x}, {y}")
+        #Sprite.__init__(self, self.groups)
         self.game = game
-        self.groups = game.all_sprites, game.all_mobs
-        Sprite.__init__(self, self.groups)  
-        self.vel = vec(choice([-10, 10]),choice([-10, 10]))
+        self.groups = (game.all_sprites, game.all_mobs)
+        Sprite.__init__(self, self.groups)
+        self.vel = vec(0,0)
         self.pos = vec(x*TILESIZE[0], y*TILESIZE[1])
         self.image = pg.Surface((32, 32))
         self.image.fill((RED))
         self.rect = self.image.get_rect()
         self.rect.x = x * TILESIZE[0]
         self.rect.y = y * TILESIZE[1]
-        self.speed = 5
+        
+        self.moving = False
+        self.target_pos = None
+        self.speed = 150  # Pixels per second for grid movement
+        self.path = []
+        self.path_update_cooldown = Cooldown(500)
+        self.path_update_cooldown.start()
+        self.grid_x = x
+        self.grid_y = y
+
+
+    def get_tile_pos(self):
+        """Get current tile position of mob"""
+        return (self.grid_x, self.grid_y)
+    
     def collide_with_walls(self, dir):
             if dir == 'x':
                 hits = pg.sprite.spritecollide(self, self.game.all_walls, False)
@@ -178,27 +207,35 @@ class Mob(Sprite):
                     # self.rect.y = self.pos.y
                     # self.vel.y *= choice([-1, 1])
     def chase_player(self):
+        print(f"Chase player called - moving: {self.moving}, path length: {len(self.path)}")
         # use A* to actually chase player with grid based movement and only when not moving
         if not self.moving:
             if self.path_update_cooldown.ready() or len(self.path) == 0:
+                print("Path update starting...")
                 self.path_update_cooldown.start()
 
                 # Get current positions in tile coordinates
                 mob_tile = self.get_tile_pos()
+                print(f"Mob tile: {mob_tile}")
                 player_tile = (int(self.game.player.rect.x // TILESIZE[0]), 
                               int(self.game.player.rect.y // TILESIZE[1]))
+                print(f"Player tile: {player_tile}")
                               
                 # Don't pathfind if already at player position
                 if mob_tile == player_tile:
                     self.path = []
                     return
                 
+                print("Getting walls...")
                 # Get all wall positions
                 walls = self.get_wall_positions()
-                
+                print(f"Found {len(walls)} walls")
+
+                print("Running A*...")
                 # Calculate new path using A*
                 new_path = astar_pathfinding(mob_tile, player_tile, walls)
-                
+                print(f"A* returned path of length: {len(new_path) if new_path else 0}")
+
                 # Only update path if we found one and it's valid
                 if new_path and len(new_path) > 0:
                     # Remove current position if it's the first element
@@ -251,6 +288,7 @@ class Mob(Sprite):
         pass
 
     def update(self):
+        print(f"Mob update - pos: {self.pos}, moving: {self.moving}")
         # Chase the player using A* pathfinding
         self.chase_player()
         
@@ -275,25 +313,25 @@ class Mob(Sprite):
         
        
  
-    def update(self):
-        #mob behavior
-        self.pos += self.vel
-        self.rect.x = self.pos.x
-        self.collide_with_walls('x')
-        self.chase_player('x')
-        self.rect.y = self.pos.y
-        self.collide_with_walls('y')
-        self.chase_player('y')
-        # if self.game.player.vel.x > self.vel.x:
-        #     self.vel.x = self.game.player.vel.x
-        #  Pacman tunnel through sides
-        if self.rect.left > WIDTH:
-            self.pos.x = -self.rect.width
-            self.rect.x = self.pos.x
+    # def update(self):
+    #     #mob behavior
+    #     self.pos += self.vel
+    #     self.rect.x = self.pos.x
+    #     self.collide_with_walls('x')
+    #     self.chase_player('x')
+    #     self.rect.y = self.pos.y
+    #     self.collide_with_walls('y')
+    #     self.chase_player('y')
+    #     # if self.game.player.vel.x > self.vel.x:
+    #     #     self.vel.x = self.game.player.vel.x
+    #     #  Pacman tunnel through sides
+    #     if self.rect.left > WIDTH:
+    #         self.pos.x = -self.rect.width
+    #         self.rect.x = self.pos.x
  
-        if self.rect.right < 0:
-            self.pos.x = WIDTH
-            self.rect.x = self.pos.x
+    #     if self.rect.right < 0:
+    #         self.pos.x = WIDTH
+    #         self.rect.x = self.pos.x
 
 # A* Pathfinding Node class
 class Node:
@@ -340,8 +378,19 @@ def astar_pathfinding(start_pos, end_pos, walls):
     # Initialize open and closed lists
     open_list = [start_node]
     closed_list = []
+
+    max_iterations = 1000  # safety limit
+    iterations = 0 
+
     # Loop until end is found
     while len(open_list) > 0:
+        iterations += 1  
+        if iterations > max_iterations: 
+            print("A* max iterations reached! No path found.")  # ADD THIS
+            return []
+
+
+
         # Get node with lowest fx
         current_node = open_list[0]
         current_index = 0

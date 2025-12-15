@@ -78,13 +78,17 @@ class Game:
 
    def run(self):
       while self.playing == True:
+         print("Loop iteration")
          self.dt = self.clock.tick(FPS) / 1000
          # input
          self.events()
+         print("Events done")
          # process
          self.update()
+         print("Update done")
          # output
          self.draw()
+         print("Draw done")
       pg.quit()
 
    def events(self):
@@ -97,6 +101,7 @@ class Game:
            print("I can get input from mousey mouse mouse mousekerson")
    def update(self):
       # self.animate()
+      print("Updating sprites...")
       self.all_sprites.update()
       #Time in seconds
       seconds = pg.time.get_ticks()//1000
@@ -108,6 +113,7 @@ class Game:
 
 
    def draw(self):
+      print("Drawing...")
       self.screen.fill(BLACK)
       self.all_sprites.draw(self.screen)
       self.draw_text(self.screen, "Health:"+str(self.player.health), 20, BLACK, 30, 20) 
