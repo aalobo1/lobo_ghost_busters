@@ -1,4 +1,9 @@
 # #Aaron Lobo
+"""Credits
+- chris bradfield/kidscancode yt channel
+- pygame docs
+- reddit + stack overflow
+- chatgpt/claude ai"""
 # #import necessary modules
 # #core game loop
 # input
